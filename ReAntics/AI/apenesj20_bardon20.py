@@ -33,7 +33,7 @@ class AIPlayer(Player):
     #   cpy           - whether the player is a copy (when playing itself)
     ##
     def __init__(self, inputPlayerId):
-        super(AIPlayer,self).__init__(inputPlayerId, "Random")
+        super(AIPlayer,self).__init__(inputPlayerId, "Jordan")
     
     ##
     #getPlacement
@@ -53,39 +53,9 @@ class AIPlayer(Player):
         numToPlace = 0
         #implemented by students to return their next move
         if currentState.phase == SETUP_PHASE_1:    #stuff on my side
-            numToPlace = 11
-            moves = []
-            for i in range(0, numToPlace):
-                move = None
-                while move == None:
-                    #Choose any x location
-                    x = random.randint(0, 9)
-                    #Choose any y location on your side of the board
-                    y = random.randint(0, 3)
-                    #Set the move if this space is empty
-                    if currentState.board[x][y].constr == None and (x, y) not in moves:
-                        move = (x, y)
-                        #Just need to make the space non-empty. So I threw whatever I felt like in there.
-                        currentState.board[x][y].constr == True
-                moves.append(move)
-            return moves
+            return self.genes[self.index].attributes[0:11]
         elif currentState.phase == SETUP_PHASE_2:   #stuff on foe's side
-            numToPlace = 2
-            moves = []
-            for i in range(0, numToPlace):
-                move = None
-                while move == None:
-                    #Choose any x location
-                    x = random.randint(0, 9)
-                    #Choose any y location on enemy side of the board
-                    y = random.randint(6, 9)
-                    #Set the move if this space is empty
-                    if currentState.board[x][y].constr == None and (x, y) not in moves:
-                        move = (x, y)
-                        #Just need to make the space non-empty. So I threw whatever I felt like in there.
-                        currentState.board[x][y].constr == True
-                moves.append(move)
-            return moves
+            return self.genes[self.index].attributes[11:]
         else:
             return [(0, 0)]
     
@@ -236,3 +206,35 @@ class AIPlayer(Player):
                             x += 1
                 child2[i] = (x, y)
         return child1, child2
+
+    def evaluateFitness(self, state):
+        # queen health
+        # enemy queen health
+        # anthill health
+        # enemy anthill health
+        # food count
+        # ant count
+        # who won
+        ourAnts = getAntList(state, 0, (QUEEN, WORKER, DRONE, SOLDIER, R_SOLDIER))
+        theirAnts = getAntList(state, 1, (QUEEN, WORKER, DRONE, SOLDIER, R_SOLDIER))
+        ourQueen = getAntList(state, 0, (QUEEN, ))
+        theirQueen = getAntList(state, 1, (QUEEN, ))
+        ourAnthill = getConstrList(state, 0, (ANTHILL, ))
+        theirAnthill = getConstrList(state, 1, (ANTHILL, ))
+        winner = getWinner(state)
+
+
+        if len(ourQueen) == 0:
+            queenHealthDifference = -1*theirQueen.health
+        elif len(theirQueen) == 0:
+            queenHealthDifference = ourQueen.health
+        else:
+            queenHealthDifference = ourQueen.health - theirQueen.health
+
+        anthillHealthDifference = ourAnthill.health - theirAnthill.health
+        foodCount = state.inventories[0].foodCount
+
+        fitnessValue = 100*(1-winner) + 2*queenHealthDifference + 10*anthillHealthDifference + 2*foodCount
+        return fitnessValue
+
+
