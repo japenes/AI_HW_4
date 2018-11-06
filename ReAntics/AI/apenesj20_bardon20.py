@@ -8,6 +8,7 @@ from Ant import UNIT_STATS
 from Move import Move
 from GameState import *
 from AIPlayerUtils import *
+#from Gene import *
 
 
 ##
@@ -20,6 +21,9 @@ from AIPlayerUtils import *
 #   playerId - The id of the player.
 ##
 class AIPlayer(Player):
+
+    genes = []
+    index = 0
 
     #__init__
     #Description: Creates a new Player
@@ -126,3 +130,109 @@ class AIPlayer(Player):
     def registerWin(self, hasWon):
         #method templaste, not implemented
         pass
+
+    class Gene:
+        attributes = []
+        fitnessScore = 0
+
+        def __init__(self, array):
+            self.attributes = array
+            fitnessScore = 0
+
+        def setFitness(self, score):
+            fitnessScore = score
+
+    def initializePopulation(self, size):
+        for i in range(0, size):
+            randomGene = []
+            for i in range(0,11):
+                x = random.randint(0,9)
+                y = random.randint(0,3)
+                while (x,y) in randomGene:
+                    x = random.randint(0, 9)
+                    y = random.randint(0, 3)
+            for i in range(0,2):
+                y = random.randint(6, 9)
+                x = random.randint(0, 14-y)
+                if (x, y) == (4, 8):
+                    x += 1
+                while (x, y) in randomGene:
+                    y = random.randint(6, 9)
+                    x = random.randint(0, 14 - y)
+                    if (x, y) == (4, 8):
+                        x += 1
+                randomGene.append((x,y))
+            self.genes[i] = self.Gene(randomGene)
+
+    def haveChildren(self, a, b):
+        randomIndex = random.randint(1,24)
+        #Child 1
+        parent1 = a[:randomIndex]
+        parent2 = b[randomIndex:]
+        for i in range(0, len(parent2)):
+            while parent2[i] in parent1:
+                if (randomIndex+i < 11):
+                    x = random.randint(0, 9)
+                    y = random.randint(0, 3)
+                else:
+                    y = random.randint(6, 9)
+                    x = random.randint(0, 14 - y)
+                    if (x, y) == (4, 8):
+                        x += 1
+            parent2[i] = (x, y)
+        child1 = parent1+parent2
+        parent1 = b[:randomIndex]
+        parent2 = a[randomIndex:]
+        for i in range(0, len(parent2)):
+            while parent2[i] in parent1:
+                if randomIndex+i < 11:
+                    x = random.randint(0, 9)
+                    y = random.randint(0, 3)
+                else:
+                    y = random.randint(6, 9)
+                    x = random.randint(0, 14 - y)
+                    if (x, y) == (4, 8):
+                        x += 1
+            parent2[i] = (x, y)
+        child2 = parent1+parent2
+        for i in range(0,len(child1)):
+            rand = random.randint(0,99)
+            if rand > 90:
+                if i < 11:
+                    x = random.randint(0, 9)
+                    y = random.randint(0, 3)
+                    while (x, y) in child1:
+                        x = random.randint(0, 9)
+                        y = random.randint(0, 3)
+                else:
+                    y = random.randint(6, 9)
+                    x = random.randint(0, 14 - y)
+                    if (x, y) == (4, 8):
+                        x += 1
+                    while (x, y) in child2:
+                        y = random.randint(6, 9)
+                        x = random.randint(0, 14 - y)
+                        if (x, y) == (4, 8):
+                            x += 1
+                child1[i] = (x, y)
+        for i in range(0,len(child2)):
+            rand = random.randint(0,99)
+            if rand > 90:
+                if (i < 11):
+                    x = random.randint(0, 9)
+                    y = random.randint(0, 3)
+                    while (x, y) in child2:
+                        x = random.randint(0, 9)
+                        y = random.randint(0, 3)
+                else:
+                    y = random.randint(6, 9)
+                    x = random.randint(0, 14 - y)
+                    if (x, y) == (4, 8):
+                        x += 1
+                    while (x, y) in child2:
+                        y = random.randint(6, 9)
+                        x = random.randint(0, 14 - y)
+                        if (x, y) == (4, 8):
+                            x += 1
+                child2[i] = (x, y)
+        return child1, child2
