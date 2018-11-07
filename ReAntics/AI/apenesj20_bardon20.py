@@ -21,7 +21,8 @@ from AIPlayerUtils import *
 #   playerId - The id of the player.
 ##
 class AIPlayer(Player):
-    SIZE = 5
+    SIZE = 6
+    TESTS = 5
 
     #__init__
     #Description: Creates a new Player
@@ -33,7 +34,10 @@ class AIPlayer(Player):
     def __init__(self, inputPlayerId):
         super(AIPlayer,self).__init__(inputPlayerId, "Jordan")
         self.genes = []
+        self.fitnessValues = [ None ] * self.TESTS
         self.index = 0
+        self.counter = 0
+        self.moveCounter = 0
         self.initializePopulation(self.SIZE)
 
     
@@ -72,6 +76,7 @@ class AIPlayer(Player):
     ##
     def getMove(self, currentState):
         self.state = currentState
+        self.moveCounter += 1
         moves = listAllLegalMoves(currentState)
         selectedMove = moves[random.randint(0,len(moves) - 1)];
 
@@ -101,11 +106,17 @@ class AIPlayer(Player):
     # This agent learns better ways to arrange the structures (Anthill, Tunnel, Grass, Food)
     #
     def registerWin(self, hasWon):
-        self.genes[self.index].setFitness(self.evaluateFitness(self.state, hasWon))
-        self.index += 1
-        if self.index >= len(self.genes):
-            #make new generation
-            self.index = 0
+        self.fitnessValues[self.counter] = self.evaluateFitness(self.state)
+        self.moveCounter = 0
+        self.counter += 1
+        if self.counter == self.TESTS:
+            self.genes[self.index].setFitness(sum(self.fitnessValues)/float(self.SIZE))
+            self.index += 1
+            self.counter = 0
+            if self.index >= len(self.genes):
+                #make new generation
+                self.genes = self.newGeneration()
+                self.index = 0
         pass
 
     class Gene:
@@ -215,18 +226,17 @@ class AIPlayer(Player):
                 child2[i] = (x, y)
         return child1, child2
 
-    def evaluateFitness(self, state, didWin):
+    def evaluateFitness(self, state):
         # queen health
         # enemy queen health
         # anthill health
         # enemy anthill health
         # food count
+        # number of moves
         # who won
 
         me = state.whoseTurn
 
-        ourAnts = getAntList(state, me, (QUEEN, WORKER, DRONE, SOLDIER, R_SOLDIER))
-        theirAnts = getAntList(state, 1-me, (QUEEN, WORKER, DRONE, SOLDIER, R_SOLDIER))
         ourQueen = state.inventories[me].getQueen()
         theirQueen = state.inventories[1-me].getQueen()
         ourAnthill = state.inventories[me].getAnthill()
@@ -243,9 +253,24 @@ class AIPlayer(Player):
         anthillHealthDifference = ourAnthill.captureHealth - theirAnthill.captureHealth
         foodCount = state.inventories[me].foodCount
 
-        fitnessValue = 100*(didWin) + 2*queenHealthDifference + 10*anthillHealthDifference + 2*foodCount
-        print("didWin: %d    queenHealth: %d    anthillHealth: %d    foodCount: %d    total: %d" %
-              (100*didWin, 2*queenHealthDifference, 10*anthillHealthDifference, 2*foodCount, fitnessValue))
+        fitnessValue = 2*queenHealthDifference + 10*anthillHealthDifference + 2*foodCount + \
+                       .1*self.moveCounter
+        # print("didWin: %d    queenHealth: %d    anthillHealth: %d    foodCount: %d    total: %d" %
+        #      (100*didWin, 2*queenHealthDifference, 10*anthillHealthDifference, 2*foodCount, fitnessValue))
+        print(self.moveCounter)
         return fitnessValue
 
+    def newGeneration(self):
+        sortedList = sorted(self.genes, key=lambda x: x.fitnessScore)
+        half = len(self.genes)/2
+        newGenes = []
+        for i in range(0, len(self.genes)):
+            a = random.randint(0, half)
+            b = random.randint(0, half)
+            while b == a:
+                b = random.randint(0, half)
+            children = self.haveChildren(sortedList[a], sortedList[b])
+            newGenes.append(children[0])
+            newGenes.append(children[1])
+        return newGenes
 
