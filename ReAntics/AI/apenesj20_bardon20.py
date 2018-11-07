@@ -21,8 +21,8 @@ from AIPlayerUtils import *
 #   playerId - The id of the player.
 ##
 class AIPlayer(Player):
-    SIZE = 6
-    TESTS = 5
+    SIZE = 4
+    TESTS = 1
 
     #__init__
     #Description: Creates a new Player
@@ -168,7 +168,7 @@ class AIPlayer(Player):
                     x = random.randint(0, 14 - y)
                     if (x, y) == (4, 8):
                         x += 1
-            parent2[i] = (x, y)
+                parent2[i] = (x, y)
         child1 = parent1+parent2
         parent1 = b[:randomIndex]
         parent2 = a[randomIndex:]
@@ -182,7 +182,7 @@ class AIPlayer(Player):
                     x = random.randint(0, 14 - y)
                     if (x, y) == (4, 8):
                         x += 1
-            parent2[i] = (x, y)
+                parent2[i] = (x, y)
         child2 = parent1+parent2
         for i in range(0,len(child1)):
             rand = random.randint(0, 99)
@@ -198,7 +198,7 @@ class AIPlayer(Player):
                     x = random.randint(0, 14 - y)
                     if (x, y) == (4, 8):
                         x += 1
-                    while (x, y) in child2:
+                    while (x, y) in child1:
                         y = random.randint(6, 9)
                         x = random.randint(0, 14 - y)
                         if (x, y) == (4, 8):
@@ -224,7 +224,7 @@ class AIPlayer(Player):
                         if (x, y) == (4, 8):
                             x += 1
                 child2[i] = (x, y)
-        return child1, child2
+        return self.Gene(child1), self.Gene(child2)
 
     def evaluateFitness(self, state):
         # queen health
@@ -257,7 +257,6 @@ class AIPlayer(Player):
                        .1*self.moveCounter
         # print("didWin: %d    queenHealth: %d    anthillHealth: %d    foodCount: %d    total: %d" %
         #      (100*didWin, 2*queenHealthDifference, 10*anthillHealthDifference, 2*foodCount, fitnessValue))
-        print(self.moveCounter)
         return fitnessValue
 
     def newGeneration(self):
@@ -269,8 +268,27 @@ class AIPlayer(Player):
             b = random.randint(0, half)
             while b == a:
                 b = random.randint(0, half)
-            children = self.haveChildren(sortedList[a], sortedList[b])
+            children = self.haveChildren(sortedList[a].attributes, sortedList[b].attributes)
             newGenes.append(children[0])
             newGenes.append(children[1])
+
+        self.printState(sortedList[0])
         return newGenes
 
+    def printState(self, gene):
+        outputState = GameState.getBlankState()
+        coords = gene.attributes
+        p1Queen = Ant(coords[0], QUEEN, 0)
+        p1Hill = Building(coords[0], ANTHILL, 0)
+        p1Tunnel = Building(coords[1], TUNNEL, 0)
+        for i in range(0,9):
+            p1Grass = Building(coords[i+2], GRASS, 0)
+            outputState.board[coords[i+2][0]][coords[i+2][1]].constr = p1Grass
+            outputState.inventories[0].constrs.append(p1Grass)
+        for i in range(0,2):
+            p1Food = Building(coords[i + 11], FOOD, 0)
+            outputState.inventories[2].constrs.append(p1Food)
+        outputState.inventories[0].ants.append(p1Queen)
+        outputState.inventories[0].constrs.append(p1Hill)
+        outputState.inventories[0].constrs.append(p1Tunnel)
+        asciiPrintState(outputState)
