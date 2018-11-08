@@ -21,8 +21,9 @@ from AIPlayerUtils import *
 #   playerId - The id of the player.
 ##
 class AIPlayer(Player):
-    SIZE = 4
-    TESTS = 1
+    SIZE = 100
+    TESTS = 100
+    PERCENTAGE = .2
 
     #__init__
     #Description: Creates a new Player
@@ -261,13 +262,13 @@ class AIPlayer(Player):
 
     def newGeneration(self):
         sortedList = sorted(self.genes, key=lambda x: x.fitnessScore)
-        half = len(self.genes)/2
+        totalBest = len(self.genes)*self.PERCENTAGE
         newGenes = []
-        for i in range(0, len(self.genes)):
-            a = random.randint(0, half)
-            b = random.randint(0, half)
+        for i in range(0, int(len(self.genes)/2)):
+            a = random.randint(0, int(totalBest))
+            b = random.randint(0, int(totalBest))
             while b == a:
-                b = random.randint(0, half)
+                b = random.randint(0, int(totalBest))
             children = self.haveChildren(sortedList[a].attributes, sortedList[b].attributes)
             newGenes.append(children[0])
             newGenes.append(children[1])
